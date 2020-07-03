@@ -1,0 +1,24 @@
+﻿{
+  "ReRoutes": [
+    {
+      "UpstreamPathTemplate": "/k8s.demo/{url}",
+      "DownstreamPathTemplate": "/{url}",
+      "DownstreamScheme": "http",
+      "ServiceName": "demo-api1",
+      "UpstreamHttpMethod": []
+    },
+    {
+      "UpstreamPathTemplate": "/name.api/{url}",
+      "DownstreamPathTemplate": "/{url}",
+      "DownstreamScheme": "http",
+      "ServiceName": "demo-api2",
+      "UpstreamHttpMethod": []
+    }
+  ],
+  "GlobalConfiguration": {
+    "ServiceDiscoveryProvider": {
+      "Namespace": "app-dev",
+      "Type": "kube"
+    }
+  }
+}

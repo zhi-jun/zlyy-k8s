@@ -1,0 +1,97 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: demo-api1-appsettings
+
+  namespace: app-dev
+data:
+  appsettings.json: |
+    {
+      "Serilog": {
+        "MinimumLevel": "Information",
+        "Using": [ "Serilog.Sinks.Console" ],
+        "Enrich": [ "FromLogContext", "WithMachineName", "WithThreadId" ],
+        "Properties": { "Application": "demo.api1" }
+      },
+      "AllowedHosts": "*",
+      "api-url": "demo-api2",
+      "ConnectionString": "server=172.31.132.93;Database=ncppdr_dev;Port=3306;Stmt=;Uid=root;Pwd=ncp_2020;"
+    }
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: demo-api2-appsettings
+  namespace: app-dev
+data:
+  appsettings.json: |
+    {
+      "Serilog": {
+        "MinimumLevel": "Information",
+        "Using": [ "Serilog.Sinks.Console" ],
+        "Enrich": [ "FromLogContext", "WithMachineName", "WithThreadId" ],
+        "Properties": { "Application": "demo.api2" }
+      },
+      "AllowedHosts": "*"
+    }
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: demo-gateway-appsettings
+  namespace: app-dev
+data:
+  appsettings.json: |
+    {
+      "Logging": {
+        "LogLevel": {
+          "Default": "Warning"
+        }
+      },
+      "AllowedHosts": "*"
+    }
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: demo-healthcheck-appsettings
+  namespace: app-dev
+data:
+  appsettings.json: |
+    {
+      "Logging": {
+        "LogLevel": {
+          "Default": "Warning"
+        }
+      },
+      "AllowedHosts": "*",
+      "HealthChecksUI": {
+        "HealthChecks": [
+          {
+            "Name": "demo-gateway",
+            "Uri": "http://demo-gateway/hc"
+          },
+          {
+            "Name": "demo-api1",
+            "Uri": "http://demo-api1/hc"
+          },
+          {
+            "Name": "demo-api2",
+            "Uri": "http://demo-api2/hc"
+          }
+        ],
+        "KubernetesDiscoveryService": {
+          "Enabled": true,
+          "ClusterHost": "https://shtest.iflyhealth.com/",
+          "Token": "xxx",
+          "HealthPath": "hc",
+          "ServicesLabel": "HealthChecks",
+          "RefreshTimeOnSeconds": 10
+        },
+        "EvaluationTimeinSeconds": 10,
+        "MinimumSecondsBetweenFailureNotifications": 60
+      }
+    }

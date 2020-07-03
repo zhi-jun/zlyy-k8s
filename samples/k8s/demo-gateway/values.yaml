@@ -1,0 +1,32 @@
+replicaCount: 3
+image:
+  repository: hub.iflytek.com/zlyy-test/demogateway
+  pullPolicy: IfNotPresent
+  secret: registrykey
+
+nameOverride: ""
+fullnameOverride: ""
+
+service:
+  type: NodePort
+  port: 80
+
+ingress: {}
+# enabled: true
+# annotations:
+#   kubernetes.io/ingress.class: nginx
+#   kubernetes.io/tls-acme: "true"
+#   nginx.ingress.kubernetes.io/rewrite-target: /$2
+# hosts:
+#   - host: shtest.iflyhealth.com
+#     paths:
+#     - /api(/|\$)(.*)
+# tls:
+#   - hosts:
+#     - shtest.iflyhealth.com
+#     secretName: ingress-tls
+
+resources: {}
+nodeSelector: {}
+tolerations: []
+affinity: {}

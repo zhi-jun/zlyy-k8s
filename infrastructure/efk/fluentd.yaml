@@ -1,0 +1,121 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fluentd-config
+  namespace: infrastructure
+data:
+  fluent.conf: |
+    <source>
+      @type tail
+      path /var/log/containers/demo-nginx*.log
+      pos_file /var/log/demo-nginx.log.pos
+      time_format %Y-%m-%dT%H:%M:%S.%NZ
+      tag demo-nginx
+      format json
+      read_from_head true
+    </source>
+
+    <source>
+      @type tail
+      path /var/log/containers/demo-api*.log
+      pos_file /var/log/demo-api.log.pos
+      time_format %Y-%m-%dT%H:%M:%S.%NZ
+      tag demo-api
+      format json
+      read_from_head true
+    </source>
+
+    <filter **>
+      @type parser
+      key_name log
+      <parse>
+        @type json
+      </parse>
+      remove_key_name_field true
+    </filter>
+
+    <match **> 
+      @type elasticsearch
+      host elasticsearch
+      include_tag_key true
+      type_name fluentd
+      port 9200
+      logstash_format true
+      flush_interval 5s
+    </match>
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fluentd
+  namespace: infrastructure
+  labels:
+    tag: fluentd
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fluentd
+  template:
+    metadata:
+      labels:
+        app: fluentd
+    spec:
+      containers:
+        - name: fluentd
+          image: "hub.iflytek.com/zlyy-public/fluentd-es:6.8"
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: TZ
+              value: Asia/Shanghai
+            - name: discovery.type
+              value: "single-node"
+          volumeMounts:
+            - name: fluentd-config
+              mountPath: "/fluentd/etc/fluent.conf"
+              subPath: fluent.conf
+            - name: containers-logs
+              mountPath: "/var/log"
+            - name: docker-logs
+              mountPath: "/var/lib/docker/containers"
+          ports:
+            - containerPort: 24224
+          resources:
+            limits:
+              cpu: 1000m
+              memory: 2Gi
+            requests:
+              cpu: 200m
+              memory: 300Mi
+      terminationGracePeriodSeconds: 10
+      volumes:
+        - name: fluentd-config
+          configMap:
+            name: fluentd-config
+        - name: containers-logs
+          hostPath:
+            path: "/var/log"
+            type: DirectoryOrCreate
+        - name: docker-logs
+          hostPath:
+            path: /var/lib/docker/containers
+      restartPolicy: Always
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fluentd
+  namespace: infrastructure
+  labels:
+    tag: "fluentd"
+spec:
+  type: NodePort
+  ports:
+    - nodePort: 32001
+      port: 24224
+      targetPort: 24224
+      protocol: TCP
+  selector:
+    app: fluentd

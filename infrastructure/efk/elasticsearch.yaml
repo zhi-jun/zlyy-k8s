@@ -1,0 +1,88 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: elasticsearch
+  namespace: infrastructure
+  labels:
+    tag: elasticsearch
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: elasticsearch
+  template:
+    metadata:
+      labels:
+        app: elasticsearch
+    spec:
+      containers:
+        - name: elasticsearch
+          image: hub.iflytek.com/zlyy-public/elasticsearch:6.4.3
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: TZ
+              value: Asia/Shanghai
+            - name: discovery.type
+              value: "single-node"
+          volumeMounts:
+            - name: elasticsearch-storage
+              mountPath: "/usr/share/elasticsearch/data"
+          ports:
+            - containerPort: 9200
+            - containerPort: 9300
+          resources:
+            limits:
+              cpu: 1000m
+              memory: 2Gi
+            requests:
+              cpu: 200m
+              memory: 300Mi
+      initContainers:
+        - name: fix-permissions
+          image: hub.iflytek.com/zlyy-public/busybox
+          command:
+            ["sh", "-c", "chown -R 1000:1000 /usr/share/elasticsearch/data"]
+          securityContext:
+            privileged: true
+          volumeMounts:
+            - name: elasticsearch-storage
+              mountPath: /usr/share/elasticsearch/data
+        - name: increase-vm-max-map
+          image: hub.iflytek.com/zlyy-public/busybox
+          command: ["sysctl", "-w", "vm.max_map_count=262144"]
+          securityContext:
+            privileged: true
+        - name: increase-fd-ulimit
+          image: hub.iflytek.com/zlyy-public/busybox
+          command: ["sh", "-c", "ulimit -n 65536"]
+          securityContext:
+            privileged: true
+      volumes:
+        - name: elasticsearch-storage
+          hostPath:
+            path: "/k8s/infrastructure/volumes/elasticsearch/data" # 目录需要设置权限
+            type: DirectoryOrCreate
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: elasticsearch
+  namespace: infrastructure
+  labels:
+    tag: "elasticsearch"
+spec:
+  type: NodePort
+  ports:
+    - nodePort: 32002
+      port: 9200
+      targetPort: 9200
+      name: "9200"
+      protocol: TCP
+    - nodePort: 32003
+      port: 9300
+      targetPort: 9300
+      name: "9300"
+      protocol: TCP
+  selector:
+    app: elasticsearch

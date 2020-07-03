@@ -1,0 +1,23 @@
+# Default values for demo-api2.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  repository: hub.iflytek.com/zlyy-test/demoapi2
+  pullPolicy: Always
+  secret: registrykey
+
+nameOverride: ""
+fullnameOverride: ""
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress: {}
+resources: {}
+nodeSelector: {}
+tolerations: []
+affinity: {}
