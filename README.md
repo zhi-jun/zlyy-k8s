@@ -30,7 +30,7 @@ helm delete -n <ns-name> <app-name>  #删除 helm软件包
 helm install -n <ns-name> <app-name> ./ #安装 helm软件包 注: Chart.yaml所在目录
 ```
 
-+ 讯飞镜像仓库 [仓库地址](https://hub.iflytek.com/)
++ 镜像仓库 [仓库地址](https://hub.iflytek.com/)
 ```
 创建secret:
 kubectl create secret docker-registry registrykey -n <ns-name>
